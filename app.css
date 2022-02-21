@@ -1,3 +1,43 @@
-body{
-    background-color: aliceblue;
-}
+@project_router.get("/{user_id}")
+async def get_projects(user_id:int):
+    user = await CustomerModel.filter(id=user_id)
+    print(user)
+    customer_id=0
+    dealer_id=0
+    contractor_id=0
+    res_list=[]
+    for i in user:
+
+        if i.role_id == 1:
+            customer_id=i.id
+        elif i.role_id == 2:
+            dealer_id = i.id
+        elif i.role_id == 3:
+            contractor_id = i.id
+    if customer_id:
+        projects_c =  await ProjectsModel.filter(customer_id=customer_id)
+        for rec in projects_c:
+            result = {}
+            dealer_name = await customer_pydantic.from_queryset(CustomerModel.filter(id=rec.dealer_id))
+            contractor = await customer_pydantic.from_queryset(CustomerModel.filter(id=rec.contractor_id))
+            contractor_name=''
+            if contractor:
+                contractor_name = contractor[0].name
+            result.update({
+                            'id': rec.id,
+                            'name': rec.project_name,
+                            'deadline': rec.expected_closure,
+                            'status': rec.status,
+                            'dealer': dealer_name[0].name,
+                            'contractor': contractor_name,
+                            'expected_closure': datetime.strftime(rec.expected_closure,'%d-%m-%Y'),
+                            'closure': rec.closure_date,
+                            'location': rec.project_location,
+                            'project_value': rec.project_value,
+                            'amount_paid': rec.amount_paid,
+                            'amount_balance':rec.amount_balance,
+                            'product_name':rec.product_name,
+                            'project_image_url':rec.project_image_url,
+                            'image_file_name':rec.image_file_name})
+            res_list.append(result)
+        return res_list
